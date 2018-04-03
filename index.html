@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/addons/p5.dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/addons/p5.sound.min.js"></script>
+    <script src="clmtrackr.min.js"></script>
+    <script src="model_pca_20_svm.js"></script>
+    <style>
+        img {
+            width: 30%;
+        }
+
+        canvas#defaultCanvas0 {
+            visibility: hidden;
+            !important
+        }
+
+    </style>
+</head>
+
+<body>
+    <script>
+        //        const load = () => {
+        //            console.log("load event detected!");
+        //        }
+        //        window.onload = load;
+
+        let api = 'http://api.giphy.com/v1/gifs/search';
+        let apiKey = '&api_key=[your api key]';
+        let query = '?q=yelling&limit=100';
+
+        let capture;
+        let tracker, url, dis, sfx;
+        let w = 640,
+            h = 480;
+
+        function setup() {
+            sfx = loadSound('wakeup.mp3');
+
+            url = api + query + apiKey;
+            loadJSON(url, gotData)
+
+            // p5.js video capture
+            capture = createCapture(VIDEO);
+            createCanvas(w, h);
+            capture.size(w, h);
+            capture.hide();
+
+            // face detection init
+            tracker = new clm.tracker();
+            tracker.init(pModel);
+            tracker.start(capture.elt);
+        }
+
+        function draw() {
+            image(capture, 0, 0, w, h);
+
+            let positions = tracker.getCurrentPosition();
+            let threshold = 30;
+
+            if (positions.length > 0) {
+                let dis = dist(positions[60][0], positions[60][1], positions[57][0], positions[57][1]);
+                if (dis >= threshold) {
+                    sfx.play();
+                    console.log("wake up!!");
+                    loadJSON(url, gotData)
+                } else {
+                    sfx.stop();
+                }
+            }
+        }
+
+        function gotData(giphy) {
+            let randomNum = int(random(0, 100));
+            let image = createImg(giphy.data[randomNum].images.preview_gif.url);
+            image.position(windowWidth / 2 - 200, windowHeight / 2 - 200);
+        }
+
+    </script>
+
+</body>
+
+</html>
